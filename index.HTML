@@ -16,22 +16,15 @@
   <h2>AI Ball</h2>
   
   <canvas id="myCanvas" width="200" height="200"></canvas>
-  <br>
-  
-  <p style="display: inline-block;
-    margin: 0;">Points: </p>
-  <p id="points" style="display: inline-block;
-    margin: 0;">0</p>
-  <br>
-  <p style="display: inline-block;
-    margin: 0;">Distance: </p>
-  <p id="distance" style="display: inline-block;
-    margin: 0;">0</p>
-    <br>
-    <p style="display: inline-block;
-      margin: 0;">Array: </p>
-    <p id="array" style="display: inline-block;
-      margin: 0;">0</p>
+
+  <div>
+    Distance: <span id="distance">0</span>
+    Points: <span id="points">0</span>
+    Array: <span id="array">0</span>
+  </div>
+
+  <h3>Points vs. Time</h3>
+  <canvas id="graphCanvas" width="400" height="100"></canvas>
   
   <script src="script.js"></script>
 </body>
