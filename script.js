@@ -70,7 +70,6 @@ function calculateDirection(){
 }
 
 // Function to update the canvas
-// Function to update the canvas
 function draw() {
     // Clear the canvas
     ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -106,6 +105,7 @@ function draw() {
     // Update text trackers
     document.getElementById("distance").innerHTML = distance.toFixed(2);
     document.getElementById("points").innerHTML = points.toFixed(2);
+    document.getElementById("array").innerHTML = dxPoints.toFixed(2);
   
     // Reset ball and hole position if ball reaches the hole
     if (distance < ballRadius) {
