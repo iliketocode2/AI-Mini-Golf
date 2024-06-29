@@ -6,37 +6,39 @@ const graphCanvas = document.getElementById('graphCanvas');
 const graphCtx = graphCanvas.getContext('2d');
 
 // Ball properties
-// let x = canvas.width / 2;
-// let y = canvas.height / 2;
 let startPosX = 10;
 let startPosY = 10;
 let x = startPosX;
 let y = startPosY;
-
 let dx = Math.random() * 2 - 1; // Change in x (speed), start with random value
 let dy = Math.random() * 2 - 1; // Change in y (speed), start with random value
 const ballRadius = 5;
 
-// position and distance variables
-// let holeX = (Math.random() * canvas.width);
-// let holeY = (Math.random() * canvas.height);
+// hole properties
 let holeX = canvas.width - 50;
 let holeY = canvas.height / 2;
-let hypotenuse = Math.sqrt((canvas.width) ** 2 + (canvas.height) ** 2);
-let distance = Math.sqrt((x - holeX) ** 2 + (y - holeY) ** 2);
-let points = (hypotenuse - distance) / 100;
-let oldPoints = points;
 
-// Arrays to store the points values for the graph
-let pointsHistory = [];
-
-// wall parameters
+// wall properties
 let wallWidth = 10;
 let wallHeight = canvas.height / 1.3;
 let wallX = (canvas.width / 2) - wallWidth;
 let wallY = 0;
 
-//draw hole
+let hypotenuse = Math.sqrt((canvas.width) ** 2 + (canvas.height) ** 2);
+let distance = Math.sqrt((x - holeX) ** 2 + (y - holeY) ** 2);
+
+let attempts = 0;
+let iterations = 0;
+// array to store the points values for the graph
+let pointsHistory = [];
+// array to store each run's points: x, y, dx, dy
+let runsData = [];
+// array to store each run
+let runs = [];
+
+/*-----------------------------------------------------------------------------*/
+
+// draw hole
 function drawHole() {
   ctx.fillStyle = "#000000";
   ctx.beginPath();
@@ -44,13 +46,13 @@ function drawHole() {
   ctx.fill();
 }
 
-//draw wall
+// draw wall
 function drawRectangle() {
   ctx.fillStyle = '#fcec03';
   ctx.fillRect(wallX, wallY, wallWidth, wallHeight);
 }
 
-// Function to draw the ball
+// draw ball
 function drawBall() {
   ctx.beginPath();
   ctx.arc(x, y, ballRadius, 0, Math.PI * 2);
@@ -62,34 +64,50 @@ function drawBall() {
 // initialize direction choosing elements
 let chosenDirectionX = 0;
 let chosenDirectionY = 0;
-let dxPoints = [
-    [dx, points]
-];
-let dyPoints = [
-    [dy, points]
-];
 
-function calculateDirection(){
+function calculateDirection() {
+  let directions = [
+    { dx: 1, dy: 0 },//right
+    { dx: -1, dy: 0 },//left
+    { dx: 0, dy: 1 },//up
+    { dx: 0, dy: -1 },//down
+    { dx: 1, dy: 1 },//RU
+    { dx: -1, dy: -1 },//LU
+    { dx: 1, dy: -1 },//RD
+    { dx: -1, dy: 1 },//LD
+  ];
 
-  
-    // let maxXpoints = dxPoints[0][0];
-    // for (let i = 0; i < dxPoints.length; i++) {
-    //     for (let j = 0; j < dxPoints[0]; j++) {
-    //         if (dxPoints[i][1] > maxXpoints){
-    //             chosenDirectionX = dxPoints[i][0];
-    //             maxXpoints = dxPoints[i][1];
-    //         }
-    //     }
-    // }
-    // let maxYpoints = dyPoints[0][0];
-    // for (let i = 0; i < dyPoints.length; i++) {
-    //     for (let j = 0; j < dyPoints[0].length; j++) {
-    //         if (dyPoints[i][1] > maxYpoints){
-    //             chosenDirectionY = dyPoints[i][0];
-    //             maxYpoints = dyPoints[i][1];
-    //         }
-    //     }
-    // }
+  let bestDirection = directions[0];
+  let bestPoints = distance;
+
+  if (attempts === 0){
+    chosenDirectionX = Math.random() * 2 - 1;
+    chosenDirectionY = Math.random() * 2 - 1;
+  }
+  else{
+    let num = findMax(pointsHistory);
+    // replicate highest point path for first 50 steps
+    if (iterations < 50){
+      chosenDirectionX = runs[num][iterations][2]; // x, y, dx, dy
+      chosenDirectionY = runs[num][iterations][3];
+    }
+    // create new path based on distance to hole
+    else{
+      for (let i of directions) {
+        let newX = x + i.dx;
+        let newY = y + i.dy;
+        let newDistance = Math.sqrt((newX - holeX) ** 2 + (newY - holeY) ** 2);
+    
+        // check if the new position is closer to the hole and not colliding with the wall
+        if (newDistance < bestPoints && !isCollidingWithWall(newX, newY)) {
+          bestDirection = i;
+          bestPoints = newDistance;
+        }
+      }
+      chosenDirectionX = bestDirection.dx;
+      chosenDirectionY = bestDirection.dy;
+    }
+  }
 }
 
 function isCollidingWithWall(x, y) {
@@ -97,7 +115,7 @@ function isCollidingWithWall(x, y) {
          y + ballRadius > wallY && y - ballRadius < wallY + wallHeight;
 }
 
-// Function to draw the graph
+// draw the graph
 function drawGraph() {
   graphCtx.clearRect(0, 0, graphCanvas.width, graphCanvas.height);
 
@@ -130,25 +148,41 @@ function drawGraph() {
           graphCtx.lineTo(x, y);
       }
   }
-
   // draw the graph path
   graphCtx.stroke();
   graphCtx.restore();
 }
 
 
-// calculate mean of points
-function calculateMean(array) {
-  let sum = 0;
+// find index of array witn max points
+function findMax(array) {
+  let max = 0;
+  let arrayToReturn = 0;
   for (let i = 0; i < array.length; i++) {
-      sum += array[i];
+      if (array[i] > max){
+        max = array[i];
+        arrayToReturn = i;
+      }
   }
-  return sum / array.length;
+  return arrayToReturn;
+}
+
+function resetRun(finalPoints){
+  pointsHistory.push(finalPoints);
+  runs.push(runsData);
+  // clear runsData array
+  runsData.length = 0
+  points = 0;
+  x = startPosX;
+  y = startPosY;
+  dx = chosenDirectionX;
+  dy = chosenDirectionY;
+  attempts++;
+  iterations = 0;
 }
 
 // Function to update the canvas
 function draw() {
-    // Clear the canvas
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
     drawBall();
@@ -165,21 +199,15 @@ function draw() {
   
     // Update direction
     calculateDirection();
-    if (!(points > oldPoints)) {
-      dx = chosenDirectionX;
-      dy = chosenDirectionY;
-    }
+    dx = chosenDirectionX;
+    dy = chosenDirectionY;
   
-    dxPoints.push([dx, points]);
-    dyPoints.push([dy, points]);
-    oldPoints = points;
+    runsData.push([x, y, dx, dy]);
   
     // Update text trackers
     document.getElementById("distance").innerHTML = distance.toFixed(2);
     document.getElementById("points").innerHTML = points.toFixed(2);
-    // document.getElementById("array").innerHTML = dxPoints.toFixed(2);
-    
-    pointsHistory.push(points);
+    document.getElementById("attempts").innerHTML = attempts.toFixed(2);
 
     drawGraph();
 
@@ -192,28 +220,24 @@ function draw() {
     }
   
     // Reset ball position if it goes out of bounds
-    if (x + dx > canvas.width - ballRadius || x + dx < ballRadius) {
-      x = canvas.width / 2;
-      dx = Math.random() * 2 - 1;
-    }
-    if (y + dy > canvas.height - ballRadius || y + dy < ballRadius) {
-      y = canvas.height / 2;
-      dy = Math.random() * 2 - 1;
+    if ((x + dx > canvas.width - ballRadius || x + dx < ballRadius) || (y + dy > canvas.height - ballRadius || y + dy < ballRadius)) {
+      resetRun(points);
     }
 
     // reset ball position if it hits wall
     if (isCollidingWithWall(x + dx, y + dy)) {
       if (x + dx > wallX - ballRadius && x + dx < wallX + wallWidth + ballRadius) {
         if (y + dy > wallY - ballRadius && y + dy < wallY + ballRadius + wallHeight) {
-          dx = -dx;
-          dy = -dy;
+          points -= 1;
+          resetRun(points);
         }
       }
     }
   
     // Request the next frame
     requestAnimationFrame(draw);
+    iterations++;
   }
   
-  // Start the animation
+  // Start animation
   draw();
