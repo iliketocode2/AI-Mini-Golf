@@ -6,16 +6,22 @@ const graphCanvas = document.getElementById('graphCanvas');
 const graphCtx = graphCanvas.getContext('2d');
 
 // Ball properties
-let x = canvas.width / 2;
-let y = canvas.height / 2;
+// let x = canvas.width / 2;
+// let y = canvas.height / 2;
+let startPosX = 10;
+let startPosY = 10;
+let x = startPosX;
+let y = startPosY;
 
 let dx = Math.random() * 2 - 1; // Change in x (speed), start with random value
 let dy = Math.random() * 2 - 1; // Change in y (speed), start with random value
 const ballRadius = 5;
 
 // position and distance variables
-let holeX = (Math.random() * canvas.width);
-let holeY = (Math.random() * canvas.height);
+// let holeX = (Math.random() * canvas.width);
+// let holeY = (Math.random() * canvas.height);
+let holeX = canvas.width - 50;
+let holeY = canvas.height / 2;
 let hypotenuse = Math.sqrt((canvas.width) ** 2 + (canvas.height) ** 2);
 let distance = Math.sqrt((x - holeX) ** 2 + (y - holeY) ** 2);
 let points = (hypotenuse - distance) / 100;
@@ -24,12 +30,24 @@ let oldPoints = points;
 // Arrays to store the points values for the graph
 let pointsHistory = [];
 
+// wall parameters
+let wallWidth = 10;
+let wallHeight = canvas.height / 1.3;
+let wallX = (canvas.width / 2) - wallWidth;
+let wallY = 0;
+
 //draw hole
 function drawHole() {
   ctx.fillStyle = "#000000";
   ctx.beginPath();
   ctx.arc(holeX, holeY, 5, 0, 360);
   ctx.fill();
+}
+
+//draw wall
+function drawRectangle() {
+  ctx.fillStyle = '#fcec03';
+  ctx.fillRect(wallX, wallY, wallWidth, wallHeight);
 }
 
 // Function to draw the ball
@@ -52,26 +70,32 @@ let dyPoints = [
 ];
 
 function calculateDirection(){
-    let maxXpoints = dxPoints[0][0];
-    for (let i = 0; i < dxPoints.length; i++) {
-        for (let j = 0; j < dxPoints[0]; j++) {
-            if (dxPoints[i][1] > maxXpoints){
-                chosenDirectionX = dxPoints[i][0];
-                maxXpoints = dxPoints[i][1];
-            }
-        }
-    }
-    let maxYpoints = dyPoints[0][0];
-    for (let i = 0; i < dyPoints.length; i++) {
-        for (let j = 0; j < dyPoints[0].length; j++) {
-            if (dyPoints[i][1] > maxYpoints){
-                chosenDirectionY = dyPoints[i][0];
-                maxYpoints = dyPoints[i][1];
-            }
-        }
-    }
+
+  
+    // let maxXpoints = dxPoints[0][0];
+    // for (let i = 0; i < dxPoints.length; i++) {
+    //     for (let j = 0; j < dxPoints[0]; j++) {
+    //         if (dxPoints[i][1] > maxXpoints){
+    //             chosenDirectionX = dxPoints[i][0];
+    //             maxXpoints = dxPoints[i][1];
+    //         }
+    //     }
+    // }
+    // let maxYpoints = dyPoints[0][0];
+    // for (let i = 0; i < dyPoints.length; i++) {
+    //     for (let j = 0; j < dyPoints[0].length; j++) {
+    //         if (dyPoints[i][1] > maxYpoints){
+    //             chosenDirectionY = dyPoints[i][0];
+    //             maxYpoints = dyPoints[i][1];
+    //         }
+    //     }
+    // }
 }
 
+function isCollidingWithWall(x, y) {
+  return x + ballRadius > wallX && x - ballRadius < wallX + wallWidth &&
+         y + ballRadius > wallY && y - ballRadius < wallY + wallHeight;
+}
 
 // Function to draw the graph
 function drawGraph() {
@@ -129,6 +153,7 @@ function draw() {
 
     drawBall();
     drawHole();
+    drawRectangle();
   
     // Move the ball
     x += dx;
@@ -174,6 +199,16 @@ function draw() {
     if (y + dy > canvas.height - ballRadius || y + dy < ballRadius) {
       y = canvas.height / 2;
       dy = Math.random() * 2 - 1;
+    }
+
+    // reset ball position if it hits wall
+    if (isCollidingWithWall(x + dx, y + dy)) {
+      if (x + dx > wallX - ballRadius && x + dx < wallX + wallWidth + ballRadius) {
+        if (y + dy > wallY - ballRadius && y + dy < wallY + ballRadius + wallHeight) {
+          dx = -dx;
+          dy = -dy;
+        }
+      }
     }
   
     // Request the next frame
