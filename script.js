@@ -27,6 +27,7 @@ let wallY = 0;
 let hypotenuse = Math.sqrt((canvas.width) ** 2 + (canvas.height) ** 2);
 let distance = Math.sqrt((x - holeX) ** 2 + (y - holeY) ** 2);
 
+let points = 0;
 let attempts = 0;
 let iterations = 0;
 // array to store the points values for the graph
@@ -44,6 +45,7 @@ function drawHole() {
   ctx.beginPath();
   ctx.arc(holeX, holeY, 5, 0, 360);
   ctx.fill();
+  ctx.closePath();
 }
 
 // draw wall
@@ -66,46 +68,22 @@ let chosenDirectionX = 0;
 let chosenDirectionY = 0;
 
 function calculateDirection() {
-  let directions = [
-    { dx: 1, dy: 0 },//right
-    { dx: -1, dy: 0 },//left
-    { dx: 0, dy: 1 },//up
-    { dx: 0, dy: -1 },//down
-    { dx: 1, dy: 1 },//RU
-    { dx: -1, dy: -1 },//LU
-    { dx: 1, dy: -1 },//RD
-    { dx: -1, dy: 1 },//LD
-  ];
-
-  let bestDirection = directions[0];
-  let bestPoints = distance;
-
   if (attempts === 0){
     chosenDirectionX = Math.random() * 2 - 1;
     chosenDirectionY = Math.random() * 2 - 1;
   }
   else{
     let num = findMax(pointsHistory);
-    // replicate highest point path for first 50 steps
-    if (iterations < 50){
+    let iterationNum = pointsHistory[num][1];
+    // replicate highest point path for half of steps
+    if (iterations < iterationNum / 2){
       chosenDirectionX = runs[num][iterations][2]; // x, y, dx, dy
       chosenDirectionY = runs[num][iterations][3];
     }
     // create new path based on distance to hole
     else{
-      for (let i of directions) {
-        let newX = x + i.dx;
-        let newY = y + i.dy;
-        let newDistance = Math.sqrt((newX - holeX) ** 2 + (newY - holeY) ** 2);
-    
-        // check if the new position is closer to the hole and not colliding with the wall
-        if (newDistance < bestPoints && !isCollidingWithWall(newX, newY)) {
-          bestDirection = i;
-          bestPoints = newDistance;
-        }
-      }
-      chosenDirectionX = bestDirection.dx;
-      chosenDirectionY = bestDirection.dy;
+      chosenDirectionX = Math.random() * 2 - 1;
+      chosenDirectionY = Math.random() * 2 - 1;
     }
   }
 }
@@ -125,7 +103,7 @@ function drawGraph() {
   graphCtx.scale(1, -1);
 
   // Define the graph properties
-  const maxPoints = Math.max(...pointsHistory);
+  const maxPoints = Math.max(...pointsHistory.map(p => p[0]));
   const graphHeight = graphCanvas.height;
   const graphWidth = graphCanvas.width;
   const pointsLength = pointsHistory.length;
@@ -136,12 +114,12 @@ function drawGraph() {
 
   // Begin the graph path
   graphCtx.beginPath();
-  graphCtx.moveTo(0, pointsHistory[0]);
+  graphCtx.moveTo(0, pointsHistory[0][0]);
 
   // draw points on the graph
   for (let i = 0; i < pointsLength; i++) {
       const x = (i / pointsLength) * graphWidth;
-      const y = graphHeight - (pointsHistory[i] / maxPoints) * graphHeight;
+      const y = graphHeight - (pointsHistory[i][0] / maxPoints) * graphHeight;
       if (i === 0) {
           graphCtx.moveTo(x, y);
       } else {
@@ -159,8 +137,8 @@ function findMax(array) {
   let max = 0;
   let arrayToReturn = 0;
   for (let i = 0; i < array.length; i++) {
-      if (array[i] > max){
-        max = array[i];
+      if (array[i][0] > max){
+        max = array[i][0];
         arrayToReturn = i;
       }
   }
@@ -168,15 +146,15 @@ function findMax(array) {
 }
 
 function resetRun(finalPoints){
-  pointsHistory.push(finalPoints);
+  pointsHistory.push([finalPoints, iterations]);
   runs.push(runsData);
   // clear runsData array
-  runsData.length = 0
+  runsData = [];
   points = 0;
   x = startPosX;
   y = startPosY;
-  dx = chosenDirectionX;
-  dy = chosenDirectionY;
+  dx = Math.random() * 2 - 1; // reset dx to new random value
+  dy = Math.random() * 2 - 1;
   attempts++;
   iterations = 0;
 }
@@ -208,6 +186,7 @@ function draw() {
     document.getElementById("distance").innerHTML = distance.toFixed(2);
     document.getElementById("points").innerHTML = points.toFixed(2);
     document.getElementById("attempts").innerHTML = attempts.toFixed(2);
+    document.getElementById("iterations").innerHTML = iterations.toFixed(2);
 
     drawGraph();
 
