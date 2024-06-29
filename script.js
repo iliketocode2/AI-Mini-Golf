@@ -1,5 +1,5 @@
 // main canvas
-const canvas = document.getElementById('myCanvas');
+const canvas = document.getElementById('mainCanvas');
 const ctx = canvas.getContext('2d');
 // graph of points canvas
 const graphCanvas = document.getElementById('graphCanvas');
@@ -21,7 +21,7 @@ let holeY = canvas.height / 2;
 // wall properties
 let wallWidth = 10;
 let wallHeight = canvas.height / 1.3;
-let wallX = (canvas.width / 2) - wallWidth;
+let wallX = (canvas.width / 2) - wallWidth / 2;
 let wallY = 0;
 
 let hypotenuse = Math.sqrt((canvas.width) ** 2 + (canvas.height) ** 2);
@@ -43,7 +43,7 @@ let runs = [];
 function drawHole() {
   ctx.fillStyle = "#000000";
   ctx.beginPath();
-  ctx.arc(holeX, holeY, 5, 0, 360);
+  ctx.arc(holeX, holeY, 5, 0, Math.PI * 2);
   ctx.fill();
   ctx.closePath();
 }
@@ -114,12 +114,11 @@ function drawGraph() {
 
   // Begin the graph path
   graphCtx.beginPath();
-  graphCtx.moveTo(0, pointsHistory[0][0]);
-
+  graphCtx.moveTo(0, pointsHistory[0]);
   // draw points on the graph
   for (let i = 0; i < pointsLength; i++) {
       const x = (i / pointsLength) * graphWidth;
-      const y = graphHeight - (pointsHistory[i][0] / maxPoints) * graphHeight;
+      const y = (pointsHistory[i][0] / maxPoints) * graphHeight;
       if (i === 0) {
           graphCtx.moveTo(x, y);
       } else {
@@ -131,8 +130,7 @@ function drawGraph() {
   graphCtx.restore();
 }
 
-
-// find index of array witn max points
+// find index of array with max points
 function findMax(array) {
   let max = 0;
   let arrayToReturn = 0;
@@ -159,7 +157,7 @@ function resetRun(finalPoints){
   iterations = 0;
 }
 
-// Function to update the canvas
+// update the canvas
 function draw() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
@@ -187,36 +185,30 @@ function draw() {
     document.getElementById("points").innerHTML = points.toFixed(2);
     document.getElementById("attempts").innerHTML = attempts.toFixed(2);
     document.getElementById("iterations").innerHTML = iterations.toFixed(2);
-
+    alert('before graph');
     drawGraph();
-
+    alert('after graph');
     // Reset ball and hole position if ball reaches the hole
     if (distance < ballRadius) {
-      x = canvas.width / 2;
-      y = canvas.height / 2;
+      resetRun(points);
       holeX = Math.random() * canvas.width;
       holeY = Math.random() * canvas.height;
     }
   
-    // Reset ball position if it goes out of bounds
+    // reset ball position if it goes out of bounds
     if ((x + dx > canvas.width - ballRadius || x + dx < ballRadius) || (y + dy > canvas.height - ballRadius || y + dy < ballRadius)) {
       resetRun(points);
     }
 
     // reset ball position if it hits wall
     if (isCollidingWithWall(x + dx, y + dy)) {
-      if (x + dx > wallX - ballRadius && x + dx < wallX + wallWidth + ballRadius) {
-        if (y + dy > wallY - ballRadius && y + dy < wallY + ballRadius + wallHeight) {
-          points -= 1;
-          resetRun(points);
-        }
-      }
+      resetRun(points - 1); // subtract a point for hitting the wall
     }
   
+    iterations++;
     // Request the next frame
     requestAnimationFrame(draw);
-    iterations++;
-  }
+}
   
-  // Start animation
-  draw();
+// Start animation
+draw();
