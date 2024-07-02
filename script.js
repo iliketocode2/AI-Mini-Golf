@@ -27,9 +27,18 @@ let wallX = (canvas.width / 2) - wallWidth / 2;
 let wallY = 0;
 
 // distance properties
-let hypotenuse = Math.sqrt((canvas.width) ** 2 + (canvas.height) ** 2);
+const hypotenuse = Math.sqrt((canvas.width) ** 2 + (canvas.height) ** 2);
+
 let distance = Math.sqrt((x - holeX) ** 2 + (y - holeY) ** 2);
 let distanceToBooster = Math.sqrt((x - bX) ** 2 + (y - bY) ** 2);
+
+// booster positions array
+const boosterPositions = [
+  {x: 50, y: 50},
+  {x: 50, y: 100},
+  {x: 50, y: 150},
+  {x: canvas.width / 2, y: 175}
+];
 
 let numBoostersHit = 0;
 let highestPoint = 0;
@@ -91,52 +100,48 @@ let chosenDirectionX = 0;
 let chosenDirectionY = 0;
 
 function calculateDirection() {
-  calculatePoints();
-
-  if (attempts === 0){
+  if (attempts === 0 || overallHighestRunIndex === -1) {
     chosenDirectionX = Math.random() * 2 - 1;
     chosenDirectionY = Math.random() * 2 - 1;
-  }
-  else{
-    // Follow the best path up to the highest point
-    if (overallHighestRunIndex !== -1 && iterations < overallHighestPointIndex) {
+  } else {
+    if (iterations < overallHighestPointIndex) {
       const bestRun = runs[overallHighestRunIndex];
       chosenDirectionX = bestRun[iterations][2]; // dx
       chosenDirectionY = bestRun[iterations][3]; // dy
-    } else {
-      if (directionChooserCounter === 0) {
-        chosenDirectionX = Math.random() * 2 - 1;
-        chosenDirectionY = Math.random() * 2 - 1;
-        directionChooserCounter = 5;
-      }
+    } else if (directionChooserCounter <= 0) {
+      chosenDirectionX = Math.random() * 2 - 1;
+      chosenDirectionY = Math.random() * 2 - 1;
+      directionChooserCounter = 5;
     }
   }
+  
+  directionChooserCounter--;
 }
 
+let boosterBonus = 1000; //  bonus for hitting a booster
+let pointMultiplier = 1; // starts at 1, increases with each booster hit
+
 function calculatePoints() {
-  distance = Math.sqrt((x - holeX) ** 2 + (y - holeY) ** 2);
-  distanceToBooster = Math.sqrt((x - bX) ** 2 + (y - bY) ** 2);
+  // Base points calculation
+  points = (x - ballRadius < wallX + wallWidth) 
+    ? (hypotenuse - distanceToBooster) * 2 
+    : (hypotenuse - distance) * 2;
+  
+  points = (points - (iterations / 100)) * pointMultiplier;
 
-  // when on left side of wall, get points for getting closer to booster, on right side of wall, get points for getting closer to hole. loose points for longer paths (number of iterations)
-  if (x - ballRadius < wallX + wallWidth) {
-    points = (hypotenuse - distanceToBooster) - (iterations / 100);
-  } else {
-    points = (hypotenuse - distance) - (iterations / 100);
+  // Check if a booster was hit
+  if (distanceToBooster < ballRadius + 5) {
+    points += boosterBonus * numBoostersHit;
+    pointMultiplier += 0.5;
+    numBoostersHit++;
   }
 
-  //see if the current point is higher than the highestPoint
-  for (let i = 0; i < runsData.length; i++){
-    if (runsData[i][5] > points){
-      highestPoint = runsData[i][5];
-      indexOfHighestPoint = iterations;
-      indexOfHighestPointRun = attempts;
-    }
-  }
+  highestPoint = Math.max(highestPoint, points);
 }
 
 function isCollidingWithWall(x, y) {
-  return x + ballRadius > wallX && x - ballRadius < wallX + wallWidth &&
-         y + ballRadius > wallY && y - ballRadius < wallHeight;
+  return x + ballRadius + 1 > wallX && x - ballRadius - 1 < wallX + wallWidth &&
+         y + ballRadius + 1 > wallY && y - ballRadius - 1 < wallHeight;
 }
 
 function drawGraph() {
@@ -185,19 +190,22 @@ function logRunsData() {
 function resetRun(finalPoints) {
   pointsHistory.push([finalPoints, iterations]);
   runs.push(runsData);
-  highestPoints.push(highestPoint);
+  
+  let runHighestPoint = Math.max(...runsData.map(d => d[5]));
+  if (runHighestPoint > overallHighestPoint) {
+    overallHighestPoint = runHighestPoint;
+    overallHighestRunIndex = runs.length - 1;
+    overallHighestPointIndex = runsData.findIndex(d => d[5] === runHighestPoint);
+  }
+  
   console.log('Run reset:', runsData);
-  // clear runsData array
+  logRunsData();
+  
   runsData = [];
-  points = 0;
-  highestPoint = 0;
-  x = startPosX;
-  y = startPosY;
-  bX = 50;
-  bY = 50;
-  numBoostersHit = 0;
-  dx = Math.random() * 2 - 1; // reset dx to new random value
-  dy = Math.random() * 2 - 1;
+  [x, y] = [startPosX, startPosY];
+  [bX, bY] = [boosterPositions[0].x, boosterPositions[0].y];
+  [dx, dy] = [Math.random() * 2 - 1, Math.random() * 2 - 1];
+  [points, highestPoint, numBoostersHit, pointMultiplier] = [0, 0, 0, 1];
   attempts++;
   directionChooserCounter = 5;
   iterations = 0;
@@ -206,68 +214,48 @@ function resetRun(finalPoints) {
 function draw() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
+  distance = Math.sqrt((x - holeX) ** 2 + (y - holeY) ** 2);
+  distanceToBooster = Math.sqrt((x - bX) ** 2 + (y - bY) ** 2);
+
   drawBooster();
   drawBall();
   drawHole();
   drawRectangle();
 
-  // Move the ball
+  calculateDirection();
+  calculatePoints();
+
+  [dx, dy] = [chosenDirectionX, chosenDirectionY];
   x += dx;
   y += dy;
 
-  // Update direction
-  calculateDirection();
-  dx = chosenDirectionX;
-  dy = chosenDirectionY;
-
   runsData.push([x, y, dx, dy, points, highestPoint]);
-
-  // Log runsData at each update
-  logRunsData();
 
   // Update text trackers
   document.getElementById("distance").innerHTML = distance.toFixed(2);
   document.getElementById("points").innerHTML = points.toFixed(2);
-  document.getElementById("attempts").innerHTML = attempts.toFixed(2);
-  document.getElementById("iterations").innerHTML = iterations.toFixed(2);
+  document.getElementById("attempts").innerHTML = attempts;
+  document.getElementById("iterations").innerHTML = iterations;
 
   drawGraph();
 
-  // Reset ball and hole position if ball reaches the hole
+  // Reset conditions
   if (distance < ballRadius) {
     resetRun(points);
-    holeX = Math.random() * canvas.width;
-    holeY = Math.random() * canvas.height;
+    [holeX, holeY] = [Math.random() * canvas.width, Math.random() * canvas.height];
   }
 
-  // Reset booster position if ball reaches the booster
-  if (distanceToBooster < ballRadius + 10) {
-    if (numBoostersHit === 0) {
-      bY = 100;
-      numBoostersHit++;
-    } else if (numBoostersHit === 1) {
-      bY = 150;
-      numBoostersHit++;
-    } else if (numBoostersHit === 2) {
-      bX = canvas.width / 2;
-      bY = 175;
-      numBoostersHit++;
-    }
+  if (distanceToBooster < ballRadius + 10 && numBoostersHit < boosterPositions.length) {
+    [bX, bY] = [boosterPositions[numBoostersHit].x, boosterPositions[numBoostersHit].y];
   }
 
-  // reset ball position if it goes out of bounds
-  if ((x + dx > canvas.width - ballRadius || x + dx < ballRadius) || (y + dy > canvas.height - ballRadius || y + dy < ballRadius)) {
+  if ((x + dx > canvas.width - ballRadius || x + dx < ballRadius) || 
+      (y + dy > canvas.height - ballRadius || y + dy < ballRadius) ||
+      isCollidingWithWall(x + dx, y + dy)) {
     resetRun(points);
   }
 
-  // reset ball position if it hits wall
-  if (isCollidingWithWall(x + dx, y + dy)) {
-    resetRun(points);
-  }
-
-  directionChooserCounter--;
   iterations++;
-  // Request the next frame
   requestAnimationFrame(draw);
 }
 
