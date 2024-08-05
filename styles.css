@@ -25,6 +25,11 @@ body {
   grid-template-columns: 1fr 1fr;
 }
 
+h3 {
+  margin-bottom: 0px;
+  margin-top: 0px;
+}
+
 /*------------------------------------Canvas Styles------------------------------------*/
 #graphCanvas {
   border: 1px solid #2c3e50;

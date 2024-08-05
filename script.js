@@ -312,9 +312,9 @@ function drawGraph() {
   
   // Add labels
   graphCtx.fillStyle = 'black';
-  graphCtx.font = '10px Arial';
-  graphCtx.fillText('Steps', 5, graphCanvas.height / 2);
-  graphCtx.fillText('Attempts', graphCanvas.width / 2, graphCanvas.height - 5);
+  graphCtx.font = '12px Arial';
+  graphCtx.fillText('Steps', 2, graphCanvas.height / 2);
+  graphCtx.fillText('Attempts', graphWidth / 2, graphCanvas.height - 2);
 }
 
 //-----------------------------------Console log Info Update-----------------------------------
