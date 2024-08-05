@@ -1,30 +1,47 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Ball Animation</title>
-  <link rel="stylesheet" href="styles.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Mini Golf</title>
+    <link rel="stylesheet" href="styles.css">
 </head>
-
-
 <body>
-  <h2>AI Ball</h2>
-  
-  <canvas id="mainCanvas" width="200" height="200"></canvas>
+    <h2>AI Mini Golf</h2>
 
-  <div>
-    Distance: <span id="distance">0</span>
-    Points: <span id="points">0</span>
-    Attempts: <span id="attempts">0</span>
-    Iterations: <span id="iterations">0</span>
-  </div>
+    <div class="twoCol">
+      <div class="column">
+    
+        <canvas id="mainCanvas" width="400" height="400"></canvas>
 
-  <h3>Final Points (of run) vs. Time</h3>
-  <canvas id="graphCanvas" width="400" height="100"></canvas>
-  
-  <script src="script.js"></script>
+        <div>
+            <button id="startSimulation">Start Simulation</button>
+            <button id="resetGrid">Reset Grid</button>
+        </div>
+
+        <div>
+            <span>Mode: </span>
+            <select id="drawMode">
+                <option value="wall">Draw Wall</option>
+                <option value="hole">Place Hole</option>
+            </select>
+        </div>
+
+        <br>
+
+        <div>
+            <span id="bold">Distance: </span><span id="distance">0</span>
+            <span id="bold">Points: </span><span id="points">0</span>
+            <span id="bold">Attempts: </span><span id="attempts">0</span>
+            <span id="bold">Iterations: </span><span id="iterations">0</span>
+        </div>
+      </div>
+      <div class="column">
+        <h3>Final Points (of run) vs. Time</h3>
+        <canvas id="graphCanvas" width="400" height="100"></canvas>
+      </div>
+    </div>
+        
+    <script src="script.js"></script>
 </body>
-
 </html>

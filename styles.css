@@ -1,7 +1,50 @@
-html {
+html, body {
   height: 100%;
   width: 100%;
+  margin: 0;
+  padding: 0;
 }
-canvas {
-  border: 1px solid black;
+
+body {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background-color: #e0f0e0;
+  font-family: Arial, sans-serif;
+}
+
+/*------------------------------------Layout Styles------------------------------------*/
+.column {
+  padding: 10px;
+  text-align: center;
+}
+
+.twoCol{
+  display: grid;
+  grid-auto-rows: 1fr;
+  grid-template-columns: 1fr 1fr;
+}
+
+/*------------------------------------Canvas Styles------------------------------------*/
+#graphCanvas {
+  border: 2px solid #2c3e50;
+  background-color: #ecf0f1;
+  margin: 10px;
+}
+
+#mainCanvas{
+  background-color: #08bd23;
+  border: 4px solid #2c3e50;
+  border-radius: 4px;
+  margin: 10px;
+}
+
+button, select {
+  margin: 5px;
+  padding: 2px 5px;
+  font-size: 16px;
+}
+
+#bold{
+  font-weight: bold;
 }
