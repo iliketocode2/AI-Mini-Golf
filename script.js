@@ -1,184 +1,154 @@
 const canvas = document.getElementById('mainCanvas');
 const ctx = canvas.getContext('2d');
-const graphCanvas = document.getElementById('graphCanvas');
-const graphCtx = graphCanvas.getContext('2d');
+const gridSize = 20;
+const cols = canvas.width / gridSize;
+const rows = canvas.height / gridSize;
 
-// Ball properties
-let startPosX = 10;
-let startPosY = 10;
-let x = startPosX;
-let y = startPosY;
-let dx = Math.random() * 2 - 1; // Change in x (speed), start with random value
-let dy = Math.random() * 2 - 1; // Change in y (speed), start with random value
-const ballRadius = 5;
+const grid = [];
+let ballPosition = { x: 0, y: 0 };
+let holePosition = null;
 
-// hole properties
-let holeX = canvas.width - 50;
-let holeY = canvas.height / 2;
-
-// booster properties
-let bX = 50;
-let bY = 50;
-
-// wall properties
-let wallWidth = 10;
-let wallHeight = canvas.height / 1.3;
-let wallX = (canvas.width / 2) - wallWidth / 2;
-let wallY = 0;
-
-// distance properties
-const hypotenuse = Math.sqrt((canvas.width) ** 2 + (canvas.height) ** 2);
-
-let distance = Math.sqrt((x - holeX) ** 2 + (y - holeY) ** 2);
-let distanceToBooster = Math.sqrt((x - bX) ** 2 + (y - bY) ** 2);
-
-// booster positions array
-const boosterPositions = [
-  {x: 50, y: 50},
-  {x: 50, y: 100},
-  {x: 50, y: 150},
-  {x: canvas.width / 2, y: 175}
-];
-
-let numBoostersHit = 0;
-let highestPoint = 0;
-let points = 0;
-let attempts = 0;
-let iterations = 0;
-let directionChooserCounter = 5;
-
-// array to store the points values for the graph
-let pointsHistory = [];
-// array to store each run's points: x, y, dx, dy
-let runsData = [];
-// array to store each run
-let runs = [];
-// array to store highest points achieved in runs
-let highestPoints = [];
-// variable to store the highest point overall and its run index
-let overallHighestPoint = 0;
-let overallHighestRunIndex = -1;
-let overallHighestPointIndex = -1;
+function initializeGrid() {
+    for (let i = 0; i < cols; i++) {
+        grid[i] = [];
+        for (let j = 0; j < rows; j++) {
+            grid[i][j] = 'empty';
+        }
+    }
+}
 
 /*-----------------------------------------------------------------------------*/
 
-// draw hole
+function drawGrid() {
+  ctx.strokeStyle = '#bdc3c7';
+  ctx.lineWidth = 0.5;
+
+  for (let i = 0; i <= cols; i++) {
+      ctx.beginPath();
+      ctx.moveTo(i * gridSize, 0);
+      ctx.lineTo(i * gridSize, canvas.height);
+      ctx.stroke();
+  }
+
+  for (let j = 0; j <= rows; j++) {
+      ctx.beginPath();
+      ctx.moveTo(0, j * gridSize);
+      ctx.lineTo(canvas.width, j * gridSize);
+      ctx.stroke();
+  }
+}
+
+function drawWalls() {
+  ctx.fillStyle = '#34495e';
+  for (let i = 0; i < cols; i++) {
+      for (let j = 0; j < rows; j++) {
+          if (grid[i][j] === 'wall') {
+              ctx.fillRect(i * gridSize, j * gridSize, gridSize, gridSize);
+          }
+      }
+  }
+}
+
 function drawHole() {
-  ctx.fillStyle = "#000000";
-  ctx.beginPath();
-  ctx.arc(holeX, holeY, 5, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.closePath();
+  if (holePosition) {
+      ctx.fillStyle = '#e74c3c';
+      ctx.beginPath();
+      ctx.arc(
+          (holePosition.x + 0.5) * gridSize,
+          (holePosition.y + 0.5) * gridSize,
+          gridSize / 3,
+          0,
+          Math.PI * 2
+      );
+      ctx.fill();
+  }
 }
 
-// draw booster
-function drawBooster() {
-  ctx.fillStyle = "#4dd916";
-  ctx.beginPath();
-  ctx.arc(bX, bY, 5, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.closePath();
-}
-
-// draw wall
-function drawRectangle() {
-  ctx.fillStyle = '#f70505';
-  ctx.fillRect(wallX, wallY, wallWidth, wallHeight);
-}
-
-// draw ball
 function drawBall() {
-  ctx.beginPath();
-  ctx.arc(x, y, ballRadius, 0, Math.PI * 2);
   ctx.fillStyle = '#0095DD';
+  ctx.beginPath();
+  ctx.arc(
+      (ballPosition.x + 0.5) * gridSize,
+      (ballPosition.y + 0.5) * gridSize,
+      gridSize / 3,
+      0,
+      Math.PI * 2
+  );
   ctx.fill();
-  ctx.closePath();
 }
 
-// initialize direction choosing elements
-let chosenDirectionX = 0;
-let chosenDirectionY = 0;
+function handleCanvasClick(event) {
+  const rect = canvas.getBoundingClientRect();
+  const x = Math.floor((event.clientX - rect.left) / gridSize);
+  const y = Math.floor((event.clientY - rect.top) / gridSize);
 
-function calculateDirection() {
-  if (attempts === 0 || overallHighestRunIndex === -1) {
-    chosenDirectionX = Math.random() * 2 - 1;
-    chosenDirectionY = Math.random() * 2 - 1;
-  } else {
-    if (iterations < overallHighestPointIndex) {
-      const bestRun = runs[overallHighestRunIndex];
-      chosenDirectionX = bestRun[iterations][2]; // dx
-      chosenDirectionY = bestRun[iterations][3]; // dy
-    } else if (directionChooserCounter <= 0) {
-      chosenDirectionX = Math.random() * 2 - 1;
-      chosenDirectionY = Math.random() * 2 - 1;
-      directionChooserCounter = 5;
-    }
+  const drawMode = document.getElementById('drawMode').value;
+
+  if (drawMode === 'wall') {
+      grid[x][y] = grid[x][y] === 'wall' ? 'empty' : 'wall';
+  } else if (drawMode === 'hole') {
+      holePosition = { x, y };
+  }
+
+  drawScene();
+}
+
+function drawScene() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  drawGrid();
+  drawWalls();
+  drawHole();
+  drawBall();
+}
+
+function resetGrid() {
+  initializeGrid();
+  holePosition = null;
+  ballPosition = { x: 0, y: 0 };
+  drawScene();
+}
+
+function moveBall(direction) {
+  const newPosition = { ...ballPosition };
+  switch (direction) {
+      case 'up': newPosition.y--; break;
+      case 'down': newPosition.y++; break;
+      case 'left': newPosition.x--; break;
+      case 'right': newPosition.x++; break;
   }
   
-  directionChooserCounter--;
-}
-
-let boosterBonus = 1000; //  bonus for hitting a booster
-let pointMultiplier = 1; // starts at 1, increases with each booster hit
-
-function calculatePoints() {
-  // Base points calculation
-  points = (x - ballRadius < wallX + wallWidth) 
-    ? (hypotenuse - distanceToBooster) * 2 
-    : (hypotenuse - distance) * 2;
+  if (newPosition.x >= 0 && newPosition.x < cols &&
+      newPosition.y >= 0 && newPosition.y < rows &&
+      grid[newPosition.x][newPosition.y] !== 'wall') {
+      ballPosition = newPosition;
+  }
   
-  points = (points - (iterations / 100)) * pointMultiplier;
+  drawScene();
+  checkGameState();
+}
 
-  // Check if a booster was hit
-  if (distanceToBooster < ballRadius + 5) {
-    points += boosterBonus * numBoostersHit;
-    pointMultiplier += 0.5;
-    numBoostersHit++;
+function checkGameState() {
+  if (ballPosition.x === holePosition.x && ballPosition.y === holePosition.y) {
+      alert('Goal reached!');
+      resetGrid();
   }
-
-  highestPoint = Math.max(highestPoint, points);
 }
 
-function isCollidingWithWall(x, y) {
-  return x + ballRadius + 1 > wallX && x - ballRadius - 1 < wallX + wallWidth &&
-         y + ballRadius + 1 > wallY && y - ballRadius - 1 < wallHeight;
-}
+canvas.addEventListener('click', handleCanvasClick);
+document.getElementById('resetGrid').addEventListener('click', resetGrid);
 
-function drawGraph() {
-  graphCtx.clearRect(0, 0, graphCanvas.width, graphCanvas.height);
+initializeGrid();
+drawScene();
 
-  // switch origin to lowerlefthand corner
-  graphCtx.save();
-  graphCtx.translate(0, graphCanvas.height);
-  graphCtx.scale(1, -1);
-
-  // Define the graph properties
-  const maxPoints = Math.max(...pointsHistory.map(p => p[0]));
-  const graphHeight = graphCanvas.height;
-  const graphWidth = graphCanvas.width;
-  const pointsLength = pointsHistory.length;
-
-  // Set up the graph style
-  graphCtx.strokeStyle = '#0095DD';
-  graphCtx.lineWidth = 2;
-
-  // Begin the graph path
-  graphCtx.beginPath();
-  graphCtx.moveTo(0, pointsHistory[0]);
-  // draw points on the graph
-  for (let i = 0; i < pointsLength; i++) {
-    const x = (i / pointsLength) * graphWidth;
-    const y = (pointsHistory[i][0] / maxPoints) * graphHeight;
-    if (i === 0) {
-      graphCtx.moveTo(x, y);
-    } else {
-      graphCtx.lineTo(x, y);
-    }
+// Temp controls for testing
+document.addEventListener('keydown', (event) => {
+  switch (event.key) {
+      case 'ArrowUp': moveBall('up'); break;
+      case 'ArrowDown': moveBall('down'); break;
+      case 'ArrowLeft': moveBall('left'); break;
+      case 'ArrowRight': moveBall('right'); break;
   }
-  // draw the graph path
-  graphCtx.stroke();
-  graphCtx.restore();
-}
+});
 
 function logRunsData() {
   console.log('runsData:');
@@ -260,4 +230,4 @@ function draw() {
 }
 
 // Start animation
-draw();
+// draw();
