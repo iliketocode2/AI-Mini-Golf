@@ -4,10 +4,9 @@ This project started off without a grid system, just to see if I could 'teach' a
 # Reward System and Q-learning
 
 ### Overview:
-Q-learning is a type of reinforcement learning algorithm that works in state-action pairs. It generates a 'Q-value' for each state-action pair, which represents the expected future reward of taking an action in a given state. The goal is to maximize the total reward over time. For this project, each state is the position of the ball on the mini-golf grid. Each action is either up, down, left, or right.
+Q-learning is a type of reinforcement learning algorithm that works in state-action pairs. It generates a 'Q-value' for each state-action pair, which represents the expected future reward of taking an action in a given state. The goal is to maximize the total reward over time. For this project, each state is the position of the ball on the mini golf grid. Each action is either up, down, left, or right.
 ### Algorithm:
-Upon initialization, an empty Q-table with Q-values set to zero is created. The Q-table is a mapping from state-action pairs to Q-values.
-For each action, its corresponding Q-value is updated using the formula: Q(s,a)←Q(s,a)+α(r+γ max(a') Q(s′,a′)−Q(s,a)) where α is the learning rate and γ is the discount factor (how much future rewards are considered). For further reading, explore [this article](https://www.geeksforgeeks.org/q-learning-in-python/) from GeeksForGeeks.
+Upon initialization, a Q-table is created with each Q-value set to zero. Q-tables map state-action pairs to their respective reward/Q-value. Everytime a specific action (in a specific state) occurs, its corresponding Q-value is updated using the formula: Q(s,a)←Q(s,a)+α(r+γ max(a') Q(s′,a′)−Q(s,a)) where α is the learning rate and γ is the discount factor (how much future rewards are considered). For further reading, explore [this article](https://www.geeksforgeeks.org/q-learning-in-python/) from GeeksForGeeks.
 
 Note: If you enclose the ball in walls, the program will run forever as I didn't yet implement behavior for that scenario. Also, the algorithm currently does not have a break case when the ball gets stuck, so there are certain map configurations that will fail to fully execute. 
 
