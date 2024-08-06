@@ -1,3 +1,24 @@
+/*-------------------------------------Popup Control----------------------------------------*/
+// Show the popup when the page loads
+window.onload = function() {
+  document.getElementById('instructionPopup').style.display = 'block';
+}
+
+// Close the popup when clicking the 'X'
+document.querySelector('.close').onclick = function() {
+  document.getElementById('instructionPopup').style.display = 'none';
+}
+
+// Close the popup when clicking outside of it
+window.onclick = function(event) {
+  let popup = document.getElementById('instructionPopup');
+  if (event.target == popup) {
+    popup.style.display = 'none';
+  }
+}
+
+/*-------------------------------------Simulation Variables----------------------------------------*/
+
 const canvas = document.getElementById('mainCanvas');
 const ctx = canvas.getContext('2d');
 const gridSize = 20;
@@ -11,7 +32,7 @@ let holePosition = null;
 
 let runsData = [];
 let attempts = 1;
-let stroke = 0;
+let strokeNum = 0;
 
 // Q-learning parameters
 const learningRate = 0.1;
@@ -23,6 +44,11 @@ const actions = ['up', 'down', 'left', 'right'];
 //Graph values
 let attemptsData = [];
 let stepCount = 0;
+
+//total attempts
+let go = false;
+let maxAttempts = 500;
+let bestRun = { strokes: Infinity, path: [] };
 
 /*-------------------------------------Drawing Control and Game start----------------------------------------*/
 function initializeGrid() {
@@ -55,7 +81,7 @@ function drawGrid() {
 }
 
 function drawSand() {
-  ctx.fillStyle = '#f4a460'; 
+  ctx.fillStyle = '#D2B48C'; 
   for (let sand of sandPositions) {
     ctx.fillRect(sand.x * gridSize, sand.y * gridSize, gridSize, gridSize);
   }
@@ -108,6 +134,7 @@ function drawBall() {
 }
 
 function drawScene() {
+  document.getElementById('attempt').innerHTML = attempts;
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   drawGrid();
   drawWalls();
@@ -116,21 +143,50 @@ function drawScene() {
   drawBall();
 }
 
-
+function drawBestRun() {
+  if (bestRun.path.length > 0) {
+    ctx.strokeStyle = 'blue';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    const startX = (bestRun.path[0].x + 0.5) * gridSize;
+    const startY = (bestRun.path[0].y + 0.5) * gridSize;
+    ctx.moveTo(startX, startY);
+    for (let i = 1; i < bestRun.path.length; i++) {
+      const x = (bestRun.path[i].x + 0.5) * gridSize;
+      const y = (bestRun.path[i].y + 0.5) * gridSize;
+      ctx.lineTo(x, y);
+    }
+    ctx.stroke();
+  }
+}
 //-----------------------------------Canvas Mouse Events-----------------------------------
+
+let isDrawing = false;
+
 function handleCanvasMouseDown(event) {
-  isDragging = true;
+  isDrawing = true;
   handleCanvasInteraction(event);
 }
 
-function handleCanvasMouseMove(event) {
-  if (isDragging) {
-    handleCanvasInteraction(event);
-  }
+function handleCanvasMouseUp() {
+  isDrawing = false;
 }
 
-function handleCanvasMouseUp(event) {
-  isDragging = false;
+function handleCanvasMouseMove(event) {
+  const rect = canvas.getBoundingClientRect();
+  const x = Math.floor((event.clientX - rect.left) / gridSize);
+  const y = Math.floor((event.clientY - rect.top) / gridSize);
+
+  // Clear previous hover effect
+  drawScene();
+
+  // Add hover effect
+  ctx.fillStyle = 'rgba(0, 0, 0, 0.2)';
+  ctx.fillRect(x * gridSize, y * gridSize, gridSize, gridSize);
+
+  if (isDrawing) {
+      handleCanvasInteraction(event);
+  }
 }
 
 function handleCanvasInteraction(event) {
@@ -141,16 +197,19 @@ function handleCanvasInteraction(event) {
   const drawMode = document.getElementById('drawMode').value;
 
   if (drawMode === 'wall') {
-    grid[x][y] = grid[x][y] === 'wall' ? 'empty' : 'wall';
+      grid[x][y] = grid[x][y] === 'wall' ? 'empty' : 'wall';
   } else if (drawMode === 'hole') {
-    holePosition = { x, y };
+      // Ensure hole is not placed on sand or wall
+      if (grid[x][y] !== 'sand' && grid[x][y] !== 'wall') {
+          holePosition = { x, y };
+      }
   } else if (drawMode === 'sand') {
-    if (grid[x][y] === 'sand') {
-      grid[x][y] = 'empty';
-      sandPositions = sandPositions.filter(pos => pos.x !== x || pos.y !== y);
-    } else {
-      placeSand(x, y);
-    }
+      if (grid[x][y] === 'sand') {
+          grid[x][y] = 'empty';
+          sandPositions = sandPositions.filter(pos => pos.x !== x || pos.y !== y);
+      } else {
+          placeSand(x, y);
+      }
   }
 
   drawScene();
@@ -218,11 +277,7 @@ function calculateReward(oldPosition, newPosition) {
   if (grid[newPosition.x][newPosition.y] === 'wall') {
     return -100; // Large negative reward for hitting a wall
   }
-  
-  if (!holePosition) {
-    return 0; // No reward if there's no hole
-  }
-  
+
   const oldDistance = Math.sqrt((oldPosition.x - holePosition.x)**2 + (oldPosition.y - holePosition.y)**2);
   const newDistance = Math.sqrt((newPosition.x - holePosition.x)**2 + (newPosition.y - holePosition.y)**2);
   
@@ -232,19 +287,12 @@ function calculateReward(oldPosition, newPosition) {
   
   let reward = oldDistance - newDistance;
   
-  // Apply penalty for sand
   if (grid[newPosition.x][newPosition.y] === 'sand') {
     reward -= 5; // Penalty for moving through sand
   }
   
   return reward;
 }
-
-function calculateStroke(path) {
-  let sandCount = path.filter(pos => grid[pos.x][pos.y] === 'sand').length;
-  return path.length - 1 + sandCount * 5;
-}
-
 
 function moveBallAI() {
   const currentState = getStateString(ballPosition.x, ballPosition.y);
@@ -278,8 +326,37 @@ function moveBallAI() {
   checkGameState();
 }
 
+/*------------------------------------Slider Control------------------------------------*/
+let delay = 500
+var slider = document.getElementById("speed");
+var output = document.getElementById("speedValue");
+var slider2 = document.getElementById("attempts");
+var output2 = document.getElementById("attemptsValue");
+
+slider.oninput = function() {
+  output.innerHTML = this.value;
+  delay = this.value;
+
+}
+slider2.oninput = function() {
+  output2.innerHTML = this.value;
+  maxAttempts = this.value;
+}
 
 /*------------------------------------Game Control------------------------------------*/
+function calculateStroke(path) {
+  let sandCount = path.filter(pos => grid[pos.x][pos.y] === 'sand').length;
+  return path.length - 1 + sandCount * 5;
+}
+
+/*create a deep copy of the currentRun object. This ensures that bestRun gets a completely new 
+object with the same values, rather than a reference to the original currentRun object. 
+This prevents any unintended modifications to bestRun when currentRun changes.*/
+function saveBestRun(currentRun) {
+  if (currentRun.strokes < bestRun.strokes) {
+    bestRun = JSON.parse(JSON.stringify(currentRun)); // Deep copy to avoid reference issues
+  }
+}
 
 function checkGameState() {
   if (!holePosition) {
@@ -290,38 +367,49 @@ function checkGameState() {
   const holeState = getStateString(holePosition.x, holePosition.y);
 
   if (ballState === holeState) {
-    stroke = calculateStroke(runsData.map(data => ({x: data[0], y: data[1]})));
+    strokeNum = calculateStroke(runsData.map(data => ({x: data[0], y: data[1]})));
+    
+    // Save the current run if it's the best so far
+    saveBestRun({
+      strokes: strokeNum,
+      path: runsData.map(data => ({x: data[0], y: data[1]}))
+    });
+
     attemptsData.push(stepCount);
     logRunsData();
     drawGraph();
     
     ballPosition = { x: 0, y: 0 };
     stepCount = 0;
+    runsData = [];
     attempts++;
     document.getElementById('attempt').innerHTML = attempts;
-    document.getElementById('stroke').innerHTML = stroke;
+    document.getElementById('stroke').innerHTML = strokeNum;
     drawScene();
+
+    if (attempts >= maxAttempts) {
+      endSimulation();
+    }
   }
 }
 
 function resetGrid() {
+  go = false;
   ballPosition = { x: 0, y: 0 };
   initializeQTable();
   runsData = [];
   attemptsData = [];
   stepCount = 0;
+  attempts = 1;
+  bestRun = { strokes: Infinity, path: [] };
   drawScene();
-}
-
-let delay = 500
-var slider = document.getElementById("myRange");
-slider.oninput = function() {
-  delay = this.value;
 }
 
 // Main game loop
 function gameLoop() {
-  moveBallAI();
+  if (go) {
+    moveBallAI();
+  }
   setTimeout(gameLoop, delay); // Adjust the delay as needed
 }
 
@@ -333,6 +421,7 @@ function startGame() {
   }
   resetGrid();
   drawGraph();
+  go = true;
   gameLoop();
 }
 
@@ -341,6 +430,13 @@ document.getElementById('startSimulation').addEventListener('click', startGame);
 
 initializeGrid();
 drawScene();
+
+function endSimulation() {
+  go = false;
+  drawScene();
+  drawBestRun();
+  console.log("Best run:", bestRun);
+}
 
 //-----------------------------------Graph Update-----------------------------------
 function drawGraph() {

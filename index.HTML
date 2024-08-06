@@ -7,7 +7,25 @@
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <h2>AI Mini Golf</h2>
+
+    <div id="instructionPopup" class="popup">
+      <div class="popup-content">
+        <span class="close">&times;</span>
+        <h2>Instructions</h2>
+        <p>Welcome to the AI Mini Golf Simulation!</p>
+        <ol>
+          <li>Use the dropdown menu to select between walls and sand traps.</li>
+          <li>Draw the mini golf corse on the grid.</li>
+          <li>Place the hole on the grid.</li>
+          <li>Adjust the simulation speed and maximum attempts.</li>
+          <li>Click "Start Simulation" to watch the AI learn!</li>
+        </ol>
+      </div>
+    </div>
+
+    <div class="header">
+      <h2>AI Mini Golf</h2>
+    </div>
 
     <div class="twoCol">
       <div class="column">
@@ -23,8 +41,8 @@
             <span>Mode: </span>
             <select id="drawMode">
                 <option value="wall">Place Wall</option>
-                <option value="hole">Place Hole</option>
                 <option value="sand">Place Sand</option>
+                <option value="hole">Place Hole</option>
             </select>
         </div>
       </div>
@@ -42,22 +60,29 @@
             <span id="points" class="value">0</span>
           </div>
           <div class="circle">
-            <span class="label">Step Number:</span>
+            <span class="label">Step #:</span>
             <span id="steps" class="value">0</span>
           </div>
           <div class="circle">
-            <span class="label">Attempt:</span>
+            <span class="label">Attempt #:</span>
             <span id="attempt" class="value">1</span>
           </div>
           <div class="circle">
-            <span class="label">Stroke Number:</span>
+            <span class="label">Stroke #:</span>
             <span id="stroke" class="value">0</span>
           </div>
         </div>
 
-        <p>Change the speed of the learning process:</p>
         <div class="slidecontainer">
-          <input type="range" min="0" max="1000" value="500" class="slider" id="myRange">
+          <span style="margin-right: 10px;">Step speed (ms):</span>
+          <input type="range" min="0" max="1000" value="500" class="slider" id="speed">
+          <span id="speedValue">500</span>
+        </div>
+
+        <div class="slidecontainer">
+          <span style="margin-right: 10px;">Max attempts:</span>
+          <input type="range" min="10" max="1000" value="500" class="slider" id="attempts">
+          <span id="attemptsValue">500</span>
         </div>
 
       </div>
