@@ -5,11 +5,13 @@ const cols = canvas.width / gridSize;
 const rows = canvas.height / gridSize;
 
 const grid = [];
+let sandPositions = [];
 let ballPosition = { x: 0, y: 0 };
 let holePosition = null;
 
 let runsData = [];
 let attempts = 1;
+let stroke = 0;
 
 // Q-learning parameters
 const learningRate = 0.1;
@@ -25,11 +27,12 @@ let stepCount = 0;
 /*-------------------------------------Drawing Control and Game start----------------------------------------*/
 function initializeGrid() {
   for (let i = 0; i < cols; i++) {
-      grid[i] = [];
-      for (let j = 0; j < rows; j++) {
-          grid[i][j] = 'empty';
-      }
+    grid[i] = [];
+    for (let j = 0; j < rows; j++) {
+      grid[i][j] = 'empty';
+    }
   }
+  sandPositions = []; // Reset sand positions
 }
 
 function drawGrid() {
@@ -51,14 +54,26 @@ function drawGrid() {
   }
 }
 
+function drawSand() {
+  ctx.fillStyle = '#f4a460'; 
+  for (let sand of sandPositions) {
+    ctx.fillRect(sand.x * gridSize, sand.y * gridSize, gridSize, gridSize);
+  }
+}
+
+function placeSand(x, y) {
+  grid[x][y] = 'sand';
+  sandPositions.push({x, y});
+}
+
 function drawWalls() {
   ctx.fillStyle = '#34495e';
   for (let i = 0; i < cols; i++) {
-      for (let j = 0; j < rows; j++) {
-          if (grid[i][j] === 'wall') {
-              ctx.fillRect(i * gridSize, j * gridSize, gridSize, gridSize);
-          }
+    for (let j = 0; j < rows; j++) {
+      if (grid[i][j] === 'wall') {
+        ctx.fillRect(i * gridSize, j * gridSize, gridSize, gridSize);
       }
+    }
   }
 }
 
@@ -92,7 +107,33 @@ function drawBall() {
   ctx.fill();
 }
 
-function handleCanvasClick(event) {
+function drawScene() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  drawGrid();
+  drawWalls();
+  drawSand();
+  drawHole();
+  drawBall();
+}
+
+
+//-----------------------------------Canvas Mouse Events-----------------------------------
+function handleCanvasMouseDown(event) {
+  isDragging = true;
+  handleCanvasInteraction(event);
+}
+
+function handleCanvasMouseMove(event) {
+  if (isDragging) {
+    handleCanvasInteraction(event);
+  }
+}
+
+function handleCanvasMouseUp(event) {
+  isDragging = false;
+}
+
+function handleCanvasInteraction(event) {
   const rect = canvas.getBoundingClientRect();
   const x = Math.floor((event.clientX - rect.left) / gridSize);
   const y = Math.floor((event.clientY - rect.top) / gridSize);
@@ -100,22 +141,25 @@ function handleCanvasClick(event) {
   const drawMode = document.getElementById('drawMode').value;
 
   if (drawMode === 'wall') {
-      grid[x][y] = grid[x][y] === 'wall' ? 'empty' : 'wall';
+    grid[x][y] = grid[x][y] === 'wall' ? 'empty' : 'wall';
   } else if (drawMode === 'hole') {
-      holePosition = { x, y };
+    holePosition = { x, y };
+  } else if (drawMode === 'sand') {
+    if (grid[x][y] === 'sand') {
+      grid[x][y] = 'empty';
+      sandPositions = sandPositions.filter(pos => pos.x !== x || pos.y !== y);
+    } else {
+      placeSand(x, y);
+    }
   }
 
   drawScene();
 }
 
-function drawScene() {
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-  drawGrid();
-  drawWalls();
-  drawHole();
-  drawBall();
-}
-
+canvas.addEventListener('mousedown', handleCanvasMouseDown);
+canvas.addEventListener('mousemove', handleCanvasMouseMove);
+canvas.addEventListener('mouseup', handleCanvasMouseUp);
+canvas.addEventListener('mouseleave', handleCanvasMouseUp);
 
 //-----------------------------------Q-learning-----------------------------------
 
@@ -172,22 +216,35 @@ function updateQValue(state, action, reward, nextState) {
 // Calculate reward
 function calculateReward(oldPosition, newPosition) {
   if (grid[newPosition.x][newPosition.y] === 'wall') {
-      return -100; // Large negative reward for hitting a wall
+    return -100; // Large negative reward for hitting a wall
   }
   
   if (!holePosition) {
-      return 0; // No reward if there's no hole
+    return 0; // No reward if there's no hole
   }
   
   const oldDistance = Math.sqrt((oldPosition.x - holePosition.x)**2 + (oldPosition.y - holePosition.y)**2);
   const newDistance = Math.sqrt((newPosition.x - holePosition.x)**2 + (newPosition.y - holePosition.y)**2);
   
   if (newPosition.x === holePosition.x && newPosition.y === holePosition.y) {
-      return 100; // Large positive reward for reaching the hole
+    return 100; // Large positive reward for reaching the hole
   }
   
-  return oldDistance - newDistance; // Positive reward for getting closer, negative for moving away
+  let reward = oldDistance - newDistance;
+  
+  // Apply penalty for sand
+  if (grid[newPosition.x][newPosition.y] === 'sand') {
+    reward -= 5; // Penalty for moving through sand
+  }
+  
+  return reward;
 }
+
+function calculateStroke(path) {
+  let sandCount = path.filter(pos => grid[pos.x][pos.y] === 'sand').length;
+  return path.length - 1 + sandCount * 5;
+}
+
 
 function moveBallAI() {
   const currentState = getStateString(ballPosition.x, ballPosition.y);
@@ -226,22 +283,24 @@ function moveBallAI() {
 
 function checkGameState() {
   if (!holePosition) {
-      return;
+    return;
   }
 
   const ballState = getStateString(ballPosition.x, ballPosition.y);
   const holeState = getStateString(holePosition.x, holePosition.y);
 
   if (ballState === holeState) {
-      attemptsData.push(stepCount);
-      logRunsData();
-      drawGraph();
-      
-      ballPosition = { x: 0, y: 0 };
-      stepCount = 0;
-      attempts++;
-      document.getElementById('attempt').innerHTML = attempts;
-      drawScene();
+    stroke = calculateStroke(runsData.map(data => ({x: data[0], y: data[1]})));
+    attemptsData.push(stepCount);
+    logRunsData();
+    drawGraph();
+    
+    ballPosition = { x: 0, y: 0 };
+    stepCount = 0;
+    attempts++;
+    document.getElementById('attempt').innerHTML = attempts;
+    document.getElementById('stroke').innerHTML = stroke;
+    drawScene();
   }
 }
 
@@ -254,10 +313,16 @@ function resetGrid() {
   drawScene();
 }
 
+let delay = 500
+var slider = document.getElementById("myRange");
+slider.oninput = function() {
+  delay = this.value;
+}
+
 // Main game loop
 function gameLoop() {
   moveBallAI();
-  setTimeout(gameLoop, 10); // Adjust the delay as needed
+  setTimeout(gameLoop, delay); // Adjust the delay as needed
 }
 
 // Initialize and start the game
@@ -271,7 +336,6 @@ function startGame() {
   gameLoop();
 }
 
-canvas.addEventListener('click', handleCanvasClick);
 document.getElementById('resetGrid').addEventListener('click', resetGrid);
 document.getElementById('startSimulation').addEventListener('click', startGame);
 

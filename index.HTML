@@ -22,21 +22,44 @@
         <div>
             <span>Mode: </span>
             <select id="drawMode">
-                <option value="wall">Draw Wall</option>
+                <option value="wall">Place Wall</option>
                 <option value="hole">Place Hole</option>
+                <option value="sand">Place Sand</option>
             </select>
         </div>
       </div>
       <div class="column">
         <h3>Number of Steps Vs. Number of Attempts</h3>
         <canvas id="graphCanvas" width="400" height="200"></canvas>
-        <div>
-            <span id="bold">State: </span><span id="state">0</span>
-            <span id="bold">Points: </span><span id="points">0</span>
-            <!--<span id="bold">Action: </span><span id="action">0</span>-->
-            <span id="bold">Step Number: </span><span id="steps">0</span>
-            <span id="bold">Attempt: </span><span id="attempt">1</span>
+        
+        <div class="container">
+          <div class="circle">
+            <span class="label">State:</span>
+            <span id="state" class="value">0</span>
+          </div>
+          <div class="circle">
+            <span class="label">Points:</span>
+            <span id="points" class="value">0</span>
+          </div>
+          <div class="circle">
+            <span class="label">Step Number:</span>
+            <span id="steps" class="value">0</span>
+          </div>
+          <div class="circle">
+            <span class="label">Attempt:</span>
+            <span id="attempt" class="value">1</span>
+          </div>
+          <div class="circle">
+            <span class="label">Stroke Number:</span>
+            <span id="stroke" class="value">0</span>
+          </div>
         </div>
+
+        <p>Change the speed of the learning process:</p>
+        <div class="slidecontainer">
+          <input type="range" min="0" max="1000" value="500" class="slider" id="myRange">
+        </div>
+
       </div>
     </div>
         
