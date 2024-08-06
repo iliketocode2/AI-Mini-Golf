@@ -58,7 +58,7 @@ function initializeGrid() {
       grid[i][j] = 'empty';
     }
   }
-  sandPositions = []; // Reset sand positions
+  sandPositions = [];
 }
 
 function drawGrid() {
