@@ -20,17 +20,17 @@
       </div>
     </div>
 
-    <h1>SOMETHING ELSE NEW</h1>
-    <button></button>
+    <h1 id="h1-1">SOMETHING ELSE NEW</h1>
+    <button id="btn-1" aria-label="Action"></button>
 
-    <h1>SOMETHING ELSE NEW</h1>
-    <button></button>
+    <h1 id="h1-2">SOMETHING ELSE NEW</h1>
+    <button id="btn-2" aria-label="Action"></button>
 
     <div class="header" role="banner">
       <span style="font-size: 30px; font-weight: bold;">AI Mini Golf</span>
     </div>
 
-    <div class="twoCol">
+    <div class="twoCol" role="main" aria-owns="h1-1 btn-1 h1-2 btn-2">
       <div class="column">
     
         <canvas id="mainCanvas" width="400" height="400"></canvas>
@@ -50,7 +50,7 @@
         </div>
       </div>
       <div class="column">
-        <h3>Stats</h3>
+        <h3 aria-level="2">Stats</h3>
         <canvas id="graphCanvas" width="400" height="200"></canvas>
         
         <div class="container">
