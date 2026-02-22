@@ -1,0 +1,17 @@
+name: Accessibility Regression Check
+
+on:
+  pull_request:
+
+jobs:
+  a11y:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - name: Run accessibility check
+        uses: zachkklein/WCAG_PR_Checker@llm_added
+        with:
+          URLS: '/'
+          BUILD_DIR: 'public'
