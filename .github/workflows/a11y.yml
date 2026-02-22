@@ -13,6 +13,7 @@ jobs:
       - name: Run accessibility check
         uses: zachkklein/WCAG_PR_Checker@will-llm
         with:
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
           APP_DIR: '.'
           BUILD_DIR: 'public'
           URLS: '/'
