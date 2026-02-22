@@ -3,6 +3,9 @@
     "version": "1.0.0",
     "private": true,
     "scripts": {
-      "build": "mkdir -p public && cp index.html styles.css script.js public/"
+        "build": "mkdir -p public && cp index.html styles.css script.js public/"
+    },
+    "dependencies": {
+        "ci": "^2.3.0"
     }
-  }
+}
