@@ -1,28 +1,17 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Mini Golf</title>
+    <title>Document</title>
     <link rel="stylesheet" href="styles.css">
-    <style>
-        /* Force some inline contrast issues for the scanner */
-        .value { color: #eee; background-color: #fff; } 
-        .close { cursor: pointer; }
-    </style>
 </head>
 <body>
-  <header>
-    <h1>A11y Check2</h1>
-  </header>
-  
-  <main>
-    <h1>A11y Check</h1>
-    
-    <div id="instructionPopup" class="popup" role="none">
+
+    <div id="instructionPopup" class="popup">
       <div class="popup-content">
-        <span class="close">&times;</span>
-        
+        <span class="close" onclick="closePopup()">&times;</span>
+        <h4>Sub-info</h4>
         <h2>Instructions</h2>
         <p>Welcome to the AI Mini Golf Simulation!</p>
         <ol>
@@ -31,22 +20,18 @@
       </div>
     </div>
 
-    <button aria-label="Action"></button>
-
-    <h1>h</h1>
-
     <div class="header">
-      <h2>AI Mini Golf</h2>
+      <span style="font-size: 30px; font-weight: bold;">AI Mini Golf</span>
     </div>
 
     <div class="twoCol">
       <div class="column">
-        
+    
         <canvas id="mainCanvas" width="400" height="400"></canvas>
 
         <div>
-            <button id="startSimulation">Start Simulation</button>
-            <button id="resetGrid">Reset Grid</button>
+            <button id="startSimulation" style="color: #eee; background: #fff;">Start</button>
+            <button id="resetGrid">Reset</button>
         </div>
 
         <div>
@@ -58,33 +43,29 @@
             </select>
         </div>
       </div>
-      
       <div class="column">
-        <h3>Number of Steps Vs. Number of Attempts</h3>
+        <h3>Stats</h3>
         <canvas id="graphCanvas" width="400" height="200"></canvas>
         
         <div class="container">
           <div class="circle">
-            <span class="label">State:</span>
-            <span id="state" class="value">0</span>
+            <span class="label">Points:</span>
+            <span id="points" class="value">0</span>
           </div>
         </div>
 
         <div class="slidecontainer">
-          <span style="margin-right: 10px;">Step speed (ms):</span>
           <input type="range" min="0" max="1000" value="500" class="slider" id="speed">
-          <span id="speedValue">500</span>
         </div>
 
         <div class="slidecontainer">
-          <span style="margin-right: 10px;">Max attempts:</span>
-          <input type="range" min="10" max="1000" value="500" class="slider" id="attempts">
-          <span id="attemptsValue">500</span>
+          <input type="range" min="10" max="1000" value="500" class="slider" id="speed">
         </div>
 
       </div>
     </div>
-  </main>
+        
     <script src="script.js"></script>
+    <img src="logo.png">
 </body>
 </html>
