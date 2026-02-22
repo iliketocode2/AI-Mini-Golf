@@ -11,7 +11,7 @@ jobs:
       pull-requests: write
     steps:
       - name: Run accessibility check
-        uses: zachkklein/WCAG_PR_Checker@llm_added
+        uses: zachkklein/WCAG_PR_Checker@llm-will
         with:
           APP_DIR: '.'
           BUILD_DIR: 'public'
