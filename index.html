@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -23,7 +23,10 @@
     <h1>SOMETHING ELSE NEW</h1>
     <button></button>
 
-    <div class="header">
+    <h1>SOMETHING ELSE NEW</h1>
+    <button></button>
+
+    <div class="header" role="banner">
       <span style="font-size: 30px; font-weight: bold;">AI Mini Golf</span>
     </div>
 
@@ -33,7 +36,7 @@
         <canvas id="mainCanvas" width="400" height="400"></canvas>
 
         <div>
-            <button id="startSimulation" style="color: #eee; background: #fff;">Start</button>
+            <button id="startSimulation" style="color: #000; background: #fff;">Start</button>
             <button id="resetGrid">Reset</button>
         </div>
 
@@ -58,17 +61,17 @@
         </div>
 
         <div class="slidecontainer">
-          <input type="range" min="0" max="1000" value="500" class="slider" id="speed">
+          <input type="range" min="0" max="1000" value="500" class="slider" id="speed" aria-label="Speed">
         </div>
 
         <div class="slidecontainer">
-          <input type="range" min="10" max="1000" value="500" class="slider" id="speed">
+          <input type="range" min="10" max="1000" value="500" class="slider" id="speed" aria-label="Speed">
         </div>
 
       </div>
     </div>
         
     <script src="script.js"></script>
-    <img src="logo.png">
+    <img src="logo.png" alt="" role="presentation">
 </body>
 </html>
